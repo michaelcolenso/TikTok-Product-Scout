@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  scout:
+    build: .
+    container_name: tiktok-product-scout
+    environment:
+      - DATABASE_URL=sqlite:///data/db/products.db
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    command: python -m src.main scheduler
+
+  api:
+    build: .
+    container_name: tiktok-scout-api
+    environment:
+      - DATABASE_URL=sqlite:///data/db/products.db
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./logs:/app/logs
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+    command: python -m src.main api
+
+volumes:
+  data:
+  logs:
