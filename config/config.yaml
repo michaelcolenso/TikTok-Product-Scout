@@ -1,0 +1,74 @@
+# Database
+database:
+  url: "sqlite:///data/db/products.db"
+
+# Scraping settings
+scraping:
+  rate_limit_delay: 2.0  # Seconds between requests
+  max_retries: 3
+  timeout: 30
+
+  # Per-agent settings
+  agents:
+    tiktok_creative_center:
+      enabled: true
+      regions: ["US", "GB", "DE"]
+      categories: ["Beauty", "Home", "Electronics", "Fashion"]
+
+    tiktok_shop:
+      enabled: true
+      use_third_party_api: true
+      api_provider: "kalodata"  # or "fastmoss"
+
+    aliexpress:
+      enabled: true
+      max_search_results: 10
+
+    amazon_movers:
+      enabled: true
+      categories: ["beauty", "home-kitchen", "electronics", "toys-games"]
+
+# Scoring weights
+scoring:
+  weights:
+    velocity: 0.35
+    margin: 0.30
+    saturation: 0.35
+
+  # Margin calculation
+  margin:
+    platform_fee: 0.08
+    payment_processing: 0.029
+    estimated_ad_cost: 0.15
+
+# Alerting
+alerts:
+  thresholds:
+    min_composite_score: 70
+    min_velocity_score: 60
+    min_margin_score: 50
+    min_saturation_score: 60
+    velocity_spike_threshold: 100
+    min_hours_between_alerts: 24
+
+  discord:
+    enabled: true
+    # webhook_url set via environment variable
+
+  email:
+    enabled: false
+    recipients: []
+
+# Scheduling
+schedule:
+  tiktok_creative_center_hours: 4
+  tiktok_shop_hours: 6
+  aliexpress_hours: 12
+  amazon_hours: 8
+  scoring_hours: 2
+  alert_check_minutes: 30
+
+# API
+api:
+  host: "0.0.0.0"
+  port: 8000
