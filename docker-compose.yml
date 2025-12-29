@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Main TikTok Product Scout application
+  scout:
+    build: .
+    container_name: tiktok-product-scout
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///data/db/products.db
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    ports:
+      - "${API_PORT:-8000}:8000"
+    restart: unless-stopped
+    command: python -m src scheduler
+
+  # API service (separate container)
+  api:
+    build: .
+    container_name: tiktok-scout-api
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///data/db/products.db
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    ports:
+      - "${API_PORT:-8000}:8000"
+    restart: unless-stopped
+    command: python -m src api
+    depends_on:
+      - scout
+
+volumes:
+  data:
