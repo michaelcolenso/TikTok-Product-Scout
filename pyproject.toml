@@ -6,6 +6,7 @@ authors = [{name = "TikTok Product Scout Team"}]
 requires-python = ">=3.11"
 dependencies = [
     "playwright>=1.40.0",
+    "playwright-stealth>=1.0.5",
     "httpx>=0.25.0",
     "sqlalchemy>=2.0.0",
     "pydantic>=2.5.0",

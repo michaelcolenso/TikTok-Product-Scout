@@ -102,6 +102,86 @@ API Documentation: \`http://localhost:8000/docs\`
 
 Edit \`config/config.yaml\` to customize scraping intervals, alert thresholds, and scoring weights.
 
+### Anti-Bot Evasion & Proxy Setup
+
+**IMPORTANT**: TikTok and AliExpress have sophisticated anti-bot defenses. For production use, proper stealth configuration and proxies are essential.
+
+#### Stealth Mode (Built-in)
+
+The system includes comprehensive stealth features enabled by default:
+
+- ✅ **Fingerprint Randomization**: Randomizes user-agents, viewports, timezones, and browser fingerprints
+- ✅ **Human-Like Behavior**: Natural mouse movements, realistic scrolling patterns, variable delays
+- ✅ **Automation Hiding**: Patches `navigator.webdriver` and other automation indicators
+- ✅ **Resource Blocking**: Blocks unnecessary images/fonts/ads to reduce fingerprint surface
+- ✅ **Block Detection**: Automatically detects CAPTCHAs and IP blocks with retry logic
+
+Configure in `config/config.yaml`:
+
+\`\`\`yaml
+scraping:
+  stealth:
+    enabled: true        # Enable stealth mode (highly recommended)
+    headless: true       # Set to false for debugging
+    block_images: true   # Block images for speed (set false if needed)
+\`\`\`
+
+#### Proxy Configuration (Required for Production)
+
+**Why Proxies Are Essential:**
+- TikTok blocks datacenter IPs and single-IP scrapers within hours
+- Residential/mobile proxies are required for sustained scraping
+- Proxy rotation prevents rate limiting and bans
+
+**Recommended Proxy Providers:**
+- **BrightData** - Premium residential proxies (best for TikTok)
+- **Oxylabs** - High-quality, reliable for e-commerce
+- **Smartproxy** - Good value, solid performance
+- **NetNut** - Fast residential proxies
+
+**Setup Steps:**
+
+1. **Get proxies** from a provider (use residential or mobile, NOT datacenter)
+
+2. **Configure in `config/config.yaml`**:
+
+\`\`\`yaml
+scraping:
+  proxies:
+    enabled: true
+    sticky_minutes: 15  # Keep same IP for 15 min before rotating
+    urls:
+      - "http://user:pass@proxy1.example.com:8080"
+      - "http://user:pass@proxy2.example.com:8080"
+      - "http://user:pass@proxy3.example.com:8080"
+\`\`\`
+
+3. **See `config/proxy.example.yaml` for detailed examples** including:
+   - BrightData configuration
+   - Smartproxy setup
+   - SOCKS5 proxies
+   - Session-based proxies
+   - Security best practices
+
+**Testing Your Proxies:**
+
+\`\`\`bash
+# Test proxy connectivity
+curl -x http://user:pass@proxy.example.com:8080 https://ipinfo.io
+
+# Verify residential IP (should show ISP, not "hosting")
+curl -x http://user:pass@proxy.example.com:8080 https://whoer.net
+\`\`\`
+
+**Cost Optimization Tips:**
+- Start with 2-3 proxies and scale as needed
+- Enable `block_images: true` to reduce bandwidth costs
+- Use sticky sessions (15-30 min) to minimize IP changes
+- Monitor logs for failed proxies
+
+**Without Proxies:**
+The system will work for testing/development, but expect blocks within a few runs on TikTok. For continuous production use, proxies are **mandatory**.
+
 ## API Endpoints
 
 - \`GET /products\` - List products with filtering

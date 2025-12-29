@@ -1,0 +1,127 @@
+# Proxy Configuration Examples
+#
+# This file demonstrates how to configure proxies for robust scraping.
+# Proxies are ESSENTIAL for production use to avoid IP bans from TikTok and AliExpress.
+#
+# Recommended Proxy Types:
+# 1. Residential Proxies - Best for TikTok (high trust, mimics real users)
+# 2. Mobile Proxies - Excellent for TikTok (highest trust, expensive)
+# 3. Datacenter Proxies - NOT recommended (easily detected and blocked)
+#
+# Recommended Providers:
+# - BrightData (https://brightdata.com) - Premium, reliable
+# - Oxylabs (https://oxylabs.io) - High quality, good for e-commerce
+# - Smartproxy (https://smartproxy.com) - Good value, reliable
+# - NetNut (https://netnut.io) - Fast residential proxies
+
+# Example 1: Single Proxy (for testing)
+# scraping:
+#   proxies:
+#     enabled: true
+#     sticky_minutes: 15
+#     urls:
+#       - "http://username:password@proxy.example.com:8080"
+
+# Example 2: Multiple Proxies (rotating pool)
+# scraping:
+#   proxies:
+#     enabled: true
+#     sticky_minutes: 15  # Use same proxy for 15 min before rotating
+#     urls:
+#       - "http://user1:pass1@us-proxy1.example.com:8080"
+#       - "http://user2:pass2@us-proxy2.example.com:8080"
+#       - "http://user3:pass3@uk-proxy1.example.com:8080"
+#       - "http://user4:pass4@de-proxy1.example.com:8080"
+
+# Example 3: BrightData Residential Proxies
+# scraping:
+#   proxies:
+#     enabled: true
+#     sticky_minutes: 30  # Longer sticky for residential
+#     urls:
+#       # Format: http://USERNAME-zone-ZONE-country-COUNTRY:PASSWORD@HOST:PORT
+#       - "http://brd-customer-hl_abc123-zone-residential-country-us:abc123xyz@brd.superproxy.io:22225"
+#       - "http://brd-customer-hl_abc123-zone-residential-country-gb:abc123xyz@brd.superproxy.io:22225"
+
+# Example 4: Smartproxy Residential Proxies
+# scraping:
+#   proxies:
+#     enabled: true
+#     sticky_minutes: 20
+#     urls:
+#       # Format: http://USERNAME:PASSWORD@HOST:PORT
+#       - "http://user123:pass123@us.smartproxy.com:10000"
+#       - "http://user123:pass123@gb.smartproxy.com:10000"
+#       - "http://user123:pass123@de.smartproxy.com:10000"
+
+# Example 5: SOCKS5 Proxies
+# scraping:
+#   proxies:
+#     enabled: true
+#     sticky_minutes: 15
+#     urls:
+#       - "socks5://username:password@proxy1.example.com:1080"
+#       - "socks5://username:password@proxy2.example.com:1080"
+
+# Example 6: Session-based proxies (for providers that use session IDs)
+# scraping:
+#   proxies:
+#     enabled: true
+#     sticky_minutes: 30
+#     urls:
+#       # Some providers use session IDs in username for sticky sessions
+#       - "http://user-session-abc123:pass@proxy.example.com:8080"
+#       - "http://user-session-def456:pass@proxy.example.com:8080"
+
+# ===========================
+# CONFIGURATION TIPS
+# ===========================
+#
+# 1. START SLOW: Begin with 1-2 proxies and test before scaling
+#
+# 2. STICKY SESSIONS:
+#    - Set sticky_minutes based on your scraping frequency
+#    - Too short: Frequent IP changes look suspicious
+#    - Too long: Higher chance of IP getting blocked
+#    - Recommended: 15-30 minutes for most use cases
+#
+# 3. GEO-MATCHING:
+#    - Use US proxies when scraping TikTok Creative Center US region
+#    - Match proxy country to target region for best results
+#
+# 4. TESTING:
+#    - Test proxies with: curl -x http://user:pass@proxy:port https://ipinfo.io
+#    - Verify they're residential: Check IP reputation at https://whoer.net
+#
+# 5. MONITORING:
+#    - Watch logs for "Proxy marked as failed" messages
+#    - Failed proxies are auto-rotated out
+#    - If all proxies fail, system will retry without proxy
+#
+# 6. SECURITY:
+#    - NEVER commit proxy credentials to git
+#    - Use environment variables for sensitive credentials
+#    - Keep this file in .gitignore
+#
+# 7. COST OPTIMIZATION:
+#    - Residential proxies charge per GB
+#    - Enable block_images: true to reduce bandwidth
+#    - Start with small proxy pool and scale as needed
+
+# ===========================
+# ENVIRONMENT VARIABLES
+# ===========================
+# For better security, you can use environment variables:
+#
+# In your .env file:
+# PROXY_1=http://user1:pass1@proxy1.example.com:8080
+# PROXY_2=http://user2:pass2@proxy2.example.com:8080
+#
+# Then reference in config.yaml:
+# scraping:
+#   proxies:
+#     enabled: true
+#     sticky_minutes: 15
+#     urls:
+#       - "${PROXY_1}"
+#       - "${PROXY_2}"

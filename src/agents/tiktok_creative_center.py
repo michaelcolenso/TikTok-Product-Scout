@@ -7,6 +7,7 @@ from playwright.async_api import Page
 import logging
 
 from .base_agent import BaseAgent, ScrapedProduct
+from ..utils.stealth import BrowserStealth
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,8 @@ class TikTokCreativeCenterAgent(BaseAgent):
             context, playwright, browser = await self.get_browser_context()
 
             try:
-                page = await context.new_page()
+                # Create stealth-enhanced page
+                page = await self.prepare_stealth_page(context)
 
                 # Intercept API calls to capture clean JSON
                 api_responses = []
@@ -70,18 +72,17 @@ class TikTokCreativeCenterAgent(BaseAgent):
 
                 page.on("response", handle_response)
 
-                # Navigate and wait for data
+                # Navigate with stealth and retry logic
                 url = f"{self.BASE_URL}/inspiration/popular/product"
                 logger.info(f"Navigating to TikTok Creative Center: {url}")
 
-                try:
-                    await page.goto(url, wait_until="networkidle", timeout=60000)
-                except Exception as e:
-                    logger.warning(f"Navigation timeout or error: {e}")
-                    # Try to continue anyway if page partially loaded
+                success = await self.safe_navigate(page, url, wait_until="networkidle", timeout=60000)
+                if not success:
+                    logger.error("Failed to navigate to TikTok Creative Center (blocked or timeout)")
+                    return []
 
-                # Wait a bit for initial data to load
-                await asyncio.sleep(3)
+                # Human-like delay for initial data to load
+                await BrowserStealth.human_delay(2000, 4000)
 
                 # Try to apply filters if elements exist
                 try:
@@ -89,13 +90,20 @@ class TikTokCreativeCenterAgent(BaseAgent):
                 except Exception as e:
                     logger.warning(f"Could not apply filters: {e}")
 
-                # Scroll to load more products
+                # Scroll to load more products with human-like behavior
                 scroll_attempts = 0
                 max_scrolls = 10
 
                 while len(products) < limit and scroll_attempts < max_scrolls:
-                    await self._scroll_page(page)
-                    await asyncio.sleep(2)  # Wait for new content
+                    # Human-like scrolling
+                    await BrowserStealth.human_scroll(page, smooth=True)
+
+                    # Random delay between scrolls (realistic)
+                    await BrowserStealth.human_delay(1500, 3500)
+
+                    # Occasional mouse movement (simulate reading/hovering)
+                    if scroll_attempts % 3 == 0:
+                        await BrowserStealth.random_mouse_movement(page, count=1)
 
                     # Parse intercepted responses
                     for response_data in api_responses:
@@ -110,6 +118,8 @@ class TikTokCreativeCenterAgent(BaseAgent):
                     if not has_more:
                         logger.info("Reached end of product list")
                         break
+
+                    logger.debug(f"Scroll {scroll_attempts}/{max_scrolls}: Found {len(products)} products so far")
 
                 # If API interception didn't work, try scraping DOM
                 if not products:
