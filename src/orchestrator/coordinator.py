@@ -26,7 +26,12 @@ class JobCoordinator:
         # Initialize agents
         agent_config = {
             "rate_limit_delay": config.get("scraping.rate_limit_delay", 2.0),
-            "max_retries": config.get("scraping.max_retries", 3),
+            "max_retries": config.get("scraping.max_retries", 4),
+            "use_stealth": config.get("scraping.stealth.enabled", True),
+            "headless": config.get("scraping.stealth.headless", True),
+            "block_images": config.get("scraping.stealth.block_images", True),
+            "proxies": config.get("scraping.proxies.urls", []) if config.get("scraping.proxies.enabled", False) else [],
+            "proxy_sticky_minutes": config.get("scraping.proxies.sticky_minutes", 15),
         }
 
         self.agents = {

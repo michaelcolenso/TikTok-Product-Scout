@@ -6,6 +6,7 @@ import logging
 import asyncio
 
 from .base_agent import BaseAgent, ScrapedProduct
+from ..utils.stealth import BrowserStealth
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +58,21 @@ class AliExpressAgent(BaseAgent):
             context, playwright, browser = await self.get_browser_context()
 
             try:
-                page = await context.new_page()
+                # Create stealth-enhanced page
+                page = await self.prepare_stealth_page(context)
 
                 # Build search URL
                 search_url = f"{self.SEARCH_URL}?SearchText={query.replace(' ', '+')}"
                 logger.info(f"Searching AliExpress: {search_url}")
 
-                await page.goto(search_url, wait_until="networkidle", timeout=60000)
-                await asyncio.sleep(3)
+                # Navigate with stealth and retry
+                success = await self.safe_navigate(page, search_url, wait_until="networkidle", timeout=60000)
+                if not success:
+                    logger.error("Failed to navigate to AliExpress (blocked or timeout)")
+                    return []
+
+                # Human-like delay
+                await BrowserStealth.human_delay(2000, 4000)
 
                 # Extract product data from search results
                 product_data = await page.evaluate("""

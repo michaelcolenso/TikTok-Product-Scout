@@ -5,8 +5,23 @@ database:
 # Scraping settings
 scraping:
   rate_limit_delay: 2.0  # Seconds between requests
-  max_retries: 3
+  max_retries: 4  # Exponential backoff retries
   timeout: 30
+
+  # Anti-bot evasion settings
+  stealth:
+    enabled: true  # Enable stealth mode (highly recommended for TikTok)
+    headless: true  # Set to false for debugging
+    block_images: true  # Block images to speed up (set false if needed)
+
+  # Proxy configuration (HIGHLY RECOMMENDED for production)
+  # Use residential or mobile proxies for best results
+  proxies:
+    enabled: false  # Set to true when proxies configured
+    sticky_minutes: 15  # Keep same proxy for X minutes
+    # List of proxy URLs (format: http://user:pass@ip:port or socks5://...)
+    # See config/proxy.example.yaml for setup examples
+    urls: []
 
   # Per-agent settings
   agents:
