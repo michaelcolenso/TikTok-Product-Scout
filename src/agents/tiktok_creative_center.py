@@ -1,6 +1,5 @@
 """TikTok Creative Center scraping agent"""
 
-import asyncio
 from datetime import datetime
 from typing import Optional
 from playwright.async_api import Page
@@ -252,7 +251,7 @@ class TikTokCreativeCenterAgent(BaseAgent):
 
             value = float(views_text.replace(",", ""))
             return int(value * multiplier)
-        except:
+        except (ValueError, TypeError):
             return 0
 
     async def _apply_filters(
@@ -279,5 +278,5 @@ class TikTokCreativeCenterAgent(BaseAgent):
                 }
             """)
             return not at_bottom
-        except:
+        except Exception:
             return False

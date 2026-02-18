@@ -20,7 +20,12 @@ class JobScheduler:
     """
 
     def __init__(self, coordinator, config):
-        self.scheduler = AsyncIOScheduler()
+        job_defaults = {
+            "coalesce": True,
+            "max_instances": config.get("schedule.max_instances_per_job", 1),
+            "misfire_grace_time": config.get("schedule.misfire_grace_time_seconds", 300),
+        }
+        self.scheduler = AsyncIOScheduler(job_defaults=job_defaults)
         self.coordinator = coordinator
         self.config = config
 
@@ -35,6 +40,7 @@ class JobScheduler:
             args=["tiktok_creative_center"],
             id="tiktok_cc_scrape",
             name="TikTok Creative Center Scrape",
+            max_instances=1,
         )
 
         # AliExpress - supplier matching
@@ -44,6 +50,7 @@ class JobScheduler:
             IntervalTrigger(hours=aliexpress_hours),
             id="supplier_match",
             name="Supplier Price Matching",
+            max_instances=1,
         )
 
         # Scoring engine
@@ -53,6 +60,7 @@ class JobScheduler:
             IntervalTrigger(hours=scoring_hours),
             id="scoring",
             name="Product Scoring",
+            max_instances=1,
         )
 
         # Alert check
@@ -62,6 +70,7 @@ class JobScheduler:
             IntervalTrigger(minutes=alert_minutes),
             id="alerts",
             name="Alert Check",
+            max_instances=1,
         )
 
         # Daily cleanup
@@ -70,6 +79,7 @@ class JobScheduler:
             CronTrigger(hour=3, minute=0),  # 3 AM
             id="cleanup",
             name="Data Cleanup",
+            max_instances=1,
         )
 
         logger.info("Scheduled jobs configured")

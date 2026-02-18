@@ -1,9 +1,7 @@
 """Database models for product tracking"""
 
 from datetime import datetime
-from typing import Optional
 from sqlalchemy import (
-    create_engine,
     Column,
     Integer,
     String,
@@ -13,6 +11,8 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     Text,
+    Index,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -24,6 +24,9 @@ class Product(Base):
     """Master product table - deduplicated across sources"""
 
     __tablename__ = "products"
+    __table_args__ = (
+        Index("idx_products_score_active_updated", "composite_score", "is_active", "last_updated_at"),
+    )
 
     id = Column(Integer, primary_key=True)
     canonical_name = Column(String, index=True)  # Normalized product name
@@ -51,6 +54,15 @@ class ProductObservation(Base):
     """Time-series observations of a product from various sources"""
 
     __tablename__ = "product_observations"
+    __table_args__ = (
+        UniqueConstraint(
+            "source",
+            "source_product_id",
+            "observed_at",
+            name="uq_observation_source_product_time",
+        ),
+        Index("idx_observation_product_source_time", "product_id", "source", "observed_at"),
+    )
 
     id = Column(Integer, primary_key=True)
     product_id = Column(Integer, ForeignKey("products.id"), index=True)
@@ -81,6 +93,14 @@ class SupplierMatch(Base):
     """Matched supplier data from AliExpress/1688"""
 
     __tablename__ = "supplier_matches"
+    __table_args__ = (
+        UniqueConstraint(
+            "product_id",
+            "supplier_source",
+            "supplier_url",
+            name="uq_supplier_match_per_product_source_url",
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     product_id = Column(Integer, ForeignKey("products.id"), index=True)
@@ -124,6 +144,7 @@ class Alert(Base):
     """Alerts sent for high-scoring products"""
 
     __tablename__ = "alerts"
+    __table_args__ = (Index("idx_alerts_product_sent", "product_id", "sent_at"),)
 
     id = Column(Integer, primary_key=True)
     product_id = Column(Integer, ForeignKey("products.id"), index=True)
