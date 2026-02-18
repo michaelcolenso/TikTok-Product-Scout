@@ -11,11 +11,10 @@ TikTok, AliExpress, and other platforms' anti-bot defenses including:
 
 import asyncio
 import random
-import math
 import logging
 from typing import Optional, Callable, Any
 from datetime import datetime, timedelta
-from playwright.async_api import Page, Browser, BrowserContext, Playwright, Route
+from playwright.async_api import Page, Route
 
 logger = logging.getLogger(__name__)
 
@@ -316,8 +315,8 @@ class BrowserStealth:
                 if element:
                     logger.warning(f"Block detected: Found CAPTCHA element '{selector}'")
                     return True
-            except:
-                pass
+            except Exception:
+                continue
 
         # Check HTTP status
         try:
@@ -326,8 +325,8 @@ class BrowserStealth:
             if "challenge" in response or "verify" in response:
                 logger.warning("Block detected: Redirected to challenge page")
                 return True
-        except:
-            pass
+        except Exception:
+            return False
 
         return False
 

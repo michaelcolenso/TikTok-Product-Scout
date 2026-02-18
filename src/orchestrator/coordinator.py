@@ -130,6 +130,7 @@ class JobCoordinator:
 
         min_score = self.config.get("alerts.thresholds.min_composite_score", 70)
         cooldown_hours = self.config.get("alerts.thresholds.min_hours_between_alerts", 24)
+        min_confidence = self.config.get("alerts.thresholds.min_confidence", 0.65)
 
         # Get high-scoring products that haven't been alerted recently
         candidates = self.db.get_alert_candidates(
@@ -144,8 +145,8 @@ class JobCoordinator:
 
                 score = self.scorer.score_product(product, observations, supplier_data)
 
-                # Only alert for actionable recommendations
-                if score.recommendation in ["strong_buy", "buy"]:
+                # Only alert for actionable recommendations with sufficient confidence
+                if score.recommendation in ["strong_buy", "buy"] and score.confidence >= min_confidence:
                     await self._send_alert(product, score)
                     alerts_sent += 1
             except Exception as e:

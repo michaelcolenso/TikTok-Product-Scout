@@ -64,25 +64,45 @@ class Database:
                 session.add(product)
                 session.flush()  # Get the ID
 
-            # Add observation
-            observation = ProductObservation(
-                product_id=product.id,
-                source=scraped_product.source,
-                source_product_id=scraped_product.source_id,
-                observed_at=scraped_product.scraped_at,
-                price_usd=scraped_product.price_usd,
-                views=scraped_product.views,
-                sales=scraped_product.sales,
-                orders=scraped_product.orders,
-                reviews=scraped_product.reviews,
-                rating=scraped_product.rating,
-                raw_data=scraped_product.raw_data,
+            # Add observation idempotently
+            observation = (
+                session.query(ProductObservation)
+                .filter(
+                    ProductObservation.source == scraped_product.source,
+                    ProductObservation.source_product_id == scraped_product.source_id,
+                    ProductObservation.observed_at == scraped_product.scraped_at,
+                )
+                .first()
             )
 
-            # Calculate deltas from previous observation
-            self._calculate_deltas(session, observation)
+            if not observation:
+                observation = ProductObservation(
+                    product_id=product.id,
+                    source=scraped_product.source,
+                    source_product_id=scraped_product.source_id,
+                    observed_at=scraped_product.scraped_at,
+                    price_usd=scraped_product.price_usd,
+                    views=scraped_product.views,
+                    sales=scraped_product.sales,
+                    orders=scraped_product.orders,
+                    reviews=scraped_product.reviews,
+                    rating=scraped_product.rating,
+                    raw_data=scraped_product.raw_data,
+                )
 
-            session.add(observation)
+                # Calculate deltas from previous observation
+                self._calculate_deltas(session, observation)
+                session.add(observation)
+            else:
+                observation.product_id = product.id
+                observation.price_usd = scraped_product.price_usd
+                observation.views = scraped_product.views
+                observation.sales = scraped_product.sales
+                observation.orders = scraped_product.orders
+                observation.reviews = scraped_product.reviews
+                observation.rating = scraped_product.rating
+                observation.raw_data = scraped_product.raw_data
+
             logger.debug(f"Upserted product: {product.canonical_name} (ID: {product.id})")
 
             return product
@@ -232,7 +252,7 @@ class Database:
             # Products with high scores that haven't been alerted recently
             products = (
                 session.query(Product)
-                .filter(Product.composite_score >= min_score, Product.is_active == True)
+                .filter(Product.composite_score >= min_score, Product.is_active)
                 .outerjoin(Alert)
                 .group_by(Product.id)
                 .having(func.max(Alert.sent_at) < cutoff or func.max(Alert.sent_at).is_(None))
@@ -301,18 +321,33 @@ class Database:
     def save_supplier_match(self, product_id: int, supplier_data: dict):
         """Save supplier match data"""
         with self.session() as session:
-            match = SupplierMatch(
-                product_id=product_id,
-                supplier_source=supplier_data.get("source", "aliexpress"),
-                supplier_url=supplier_data.get("supplier_url", ""),
-                supplier_price_usd=supplier_data.get("min_price", 0),
-                shipping_cost_usd=supplier_data.get("shipping_estimate", 0),
-                estimated_delivery_days=supplier_data.get("delivery_days", 0),
-                supplier_rating=supplier_data.get("supplier_rating", 0),
-                supplier_orders=supplier_data.get("supplier_orders", 0),
-                confidence_score=supplier_data.get("confidence", 0.5),
+            source = supplier_data.get("source", "aliexpress")
+            supplier_url = supplier_data.get("supplier_url", "")
+
+            match = (
+                session.query(SupplierMatch)
+                .filter(
+                    SupplierMatch.product_id == product_id,
+                    SupplierMatch.supplier_source == source,
+                    SupplierMatch.supplier_url == supplier_url,
+                )
+                .first()
             )
-            session.add(match)
+
+            if not match:
+                match = SupplierMatch(
+                    product_id=product_id,
+                    supplier_source=source,
+                    supplier_url=supplier_url,
+                )
+                session.add(match)
+
+            match.supplier_price_usd = supplier_data.get("min_price", 0)
+            match.shipping_cost_usd = supplier_data.get("shipping_estimate", 0)
+            match.estimated_delivery_days = supplier_data.get("delivery_days", 0)
+            match.supplier_rating = supplier_data.get("supplier_rating", 0)
+            match.supplier_orders = supplier_data.get("supplier_orders", 0)
+            match.confidence_score = supplier_data.get("confidence", 0.5)
 
     def cleanup_old_observations(self, cutoff: datetime) -> int:
         """Remove observations older than cutoff date"""

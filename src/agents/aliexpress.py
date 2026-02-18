@@ -3,7 +3,6 @@
 from datetime import datetime
 from typing import Optional
 import logging
-import asyncio
 
 from .base_agent import BaseAgent, ScrapedProduct
 from ..utils.stealth import BrowserStealth
@@ -206,7 +205,7 @@ class AliExpressAgent(BaseAgent):
             if match:
                 value = float(match.group())
                 return int(value * multiplier)
-        except:
+        except (ValueError, TypeError):
             pass
 
         return 0

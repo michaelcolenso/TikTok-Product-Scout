@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 from pydantic import BaseModel, Field
 import httpx
 from playwright.async_api import async_playwright, Page, BrowserContext
