@@ -65,6 +65,7 @@ alerts:
     min_saturation_score: 60
     velocity_spike_threshold: 100
     min_hours_between_alerts: 24
+    min_confidence: 0.65
 
   discord:
     enabled: true
@@ -82,6 +83,8 @@ schedule:
   amazon_hours: 8
   scoring_hours: 2
   alert_check_minutes: 30
+  max_instances_per_job: 1
+  misfire_grace_time_seconds: 300
 
 # API
 api:
